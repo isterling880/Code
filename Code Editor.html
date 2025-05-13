@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Code Editor with Output</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background-color: #282c34; /* Dark background */
+            color: #abb2bf; /* Light gray text */
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: #61dafb; /* Cyan */
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.8em;
+        }
+
+        .editor-container {
+            background-color: #3a404a; /* Slightly lighter dark */
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px; /* Max width for the editor area */
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px; /* Space below editor */
+        }
+
+        #codeEditor {
+            font-family: 'Roboto Mono', monospace; /* Monospace font for code */
+            background-color: #282c34; /* Match body background */
+            color: #abb2bf; /* Match body text color */
+            font-size: 1em;
+            padding: 15px;
+            border: 1px solid #61dafb; /* Cyan border */
+            border-radius: 5px;
+            resize: vertical; /* Allow vertical resizing */
+            min-height: 300px; /* Minimum height */
+            outline: none; /* Remove default outline */
+            margin-bottom: 15px;
+            width: 100%; /* Take full width of container */
+            box-sizing: border-box; /* Include padding and border in element's total width */
+            line-height: 1.5; /* Improve readability */
+            tab-size: 4; /* Set tab width */
+        }
+
+         #codeEditor::placeholder {
+            color: #636f83; /* Lighter placeholder text */
+         }
+
+        .save-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .save-controls label {
+             color: #abb2bf;
+             font-weight: 600;
+        }
+
+        .save-controls input[type="text"] {
+            flex-grow: 1; /* Take up available space */
+            padding: 8px 12px;
+            border: 1px solid #61dafb;
+            border-radius: 5px;
+            background-color: #282c34;
+            color: #abb2bf;
+            font-size: 1em;
+            outline: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap; /* Allow buttons to wrap */
+            margin-bottom: 15px; /* Space below controls */
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s ease;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            color: white;
+        }
+
+        #saveButton {
+            background-color: #4CAF50; /* Green */
+        }
+        #saveButton:hover {
+            background-color: #45a049;
+        }
+
+        #clearEditorButton { /* Renamed to avoid conflict */
+            background-color: #f44336; /* Red */
+        }
+        #clearEditorButton:hover {
+            background-color: #da190b;
+        }
+
+        #runButton { /* New Run button style */
+             background-color: #007bff; /* Blue */
+        }
+        #runButton:hover {
+             background-color: #0056b3;
+        }
+
+
+        .status-message {
+            margin-top: 15px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #abb2bf;
+            min-height: 1.2em; /* Reserve space */
+        }
+
+        .output-container { /* New container for output */
+            background-color: #3a404a;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+            margin-bottom: 20px; /* Space below output */
+        }
+
+        .output-container h2 {
+            color: #61dafb;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        #outputFrame { /* Style for the output iframe */
+            width: 100%;
+            height: 200px; /* Fixed height for output, can be adjusted */
+            border: 1px solid #61dafb;
+            border-radius: 5px;
+            background-color: #fff; /* White background for output */
+        }
+
+
+        .saved-codes-container {
+            background-color: #3a404a;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            box-sizing: border-box;
+        }
+
+        .saved-codes-container h2 {
+            color: #61dafb;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        #savedCodesList {
+            list-style: none; /* Remove default list bullets */
+            padding: 0;
+            margin: 0;
+        }
+
+        #savedCodesList li {
+            background-color: #282c34;
+            border: 1px solid #636f83;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between; /* Space out name and delete button */
+            align-items: center;
+            cursor: pointer; /* Indicate clickable */
+            transition: background-color 0.2s ease;
+        }
+
+        #savedCodesList li:hover {
+            background-color: #3a404a;
+        }
+
+        #savedCodesList li span.code-name {
+            flex-grow: 1; /* Allow name to take space */
+            margin-right: 10px; /* Space before delete button */
+            color: #abb2bf;
+            word-break: break-all; /* Break long names */
+        }
+
+        #savedCodesList li button.delete-btn {
+            background-color: #f44336; /* Red */
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.8em;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+            flex-shrink: 0; /* Prevent button from shrinking */
+        }
+
+        #savedCodesList li button.delete-btn:hover {
+            background-color: #da190b;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+             .save-controls input[type="text"] {
+                width: calc(100% - 120px); /* Adjust width considering save button */
+             }
+             .save-controls {
+                justify-content: center;
+             }
+             .save-controls button {
+                width: auto; /* Auto width for save button */
+             }
+             .controls {
+                flex-direction: column;
+                align-items: center;
+             }
+             .controls button {
+                width: 150px; /* Fixed width for stacked buttons */
+             }
+             .saved-codes-container, .output-container {
+                padding: 10px;
+             }
+             .saved-codes-container h2, .output-container h2 {
+                font-size: 1.1em;
+             }
+             #savedCodesList li {
+                padding: 8px;
+                font-size: 0.9em;
+             }
+             #savedCodesList li button.delete-btn {
+                padding: 3px 6px;
+                font-size: 0.7em;
+             }
+             #outputFrame {
+                height: 150px; /* Smaller output height on small screens */
+             }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Code Editor</h1>
+
+    <div class="editor-container">
+        <div class="save-controls">
+            <label for="codeName">Code Name:</label>
+            <input type="text" id="codeName" placeholder="Enter name for your code">
+            <button id="saveButton">Save Code</button>
+        </div>
+
+        <textarea id="codeEditor" placeholder="Write your code here..."></textarea>
+
+        <div class="controls">
+            <button id="runButton">Run Code</button> <button id="clearEditorButton">Clear Editor</button>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <div class="output-container">
+        <h2>Output</h2>
+        <iframe id="outputFrame" src="about:blank"></iframe>
+    </div>
+
+
+    <div class="saved-codes-container">
+        <h2>Saved Codes</h2>
+        <ul id="savedCodesList">
+            </ul>
+    </div>
+
+
+    <script>
+        const codeEditor = document.getElementById('codeEditor');
+        const codeNameInput = document.getElementById('codeName');
+        const saveButton = document.getElementById('saveButton');
+        const clearEditorButton = document.getElementById('clearEditorButton');
+        const runButton = document.getElementById('runButton'); // Get the new Run button
+        const statusMessage = document.getElementById('statusMessage');
+        const savedCodesList = document.getElementById('savedCodesList');
+        const outputFrame = document.getElementById('outputFrame'); // Get the output iframe
+
+        const localStorageKey = 'allSavedCodes'; // Key to use in localStorage
+
+        // --- Functions ---
+
+        // Function to display a temporary status message
+        function showStatus(message, duration = 3000) {
+            statusMessage.textContent = message;
+            // Clear the message after a few seconds
+            setTimeout(() => {
+                statusMessage.textContent = '';
+            }, duration);
+        }
+
+        // Function to get all saved codes from localStorage
+        function getAllSavedCodes() {
+            try {
+                const savedCodesJson = localStorage.getItem(localStorageKey);
+                // Parse the JSON string, return an empty object if nothing is found or parsing fails
+                return savedCodesJson ? JSON.parse(savedCodesJson) : {};
+            } catch (e) {
+                console.error('Error getting saved codes from localStorage:', e);
+                showStatus('Error loading saved codes list.', 5000);
+                return {}; // Return empty object on error
+            }
+        }
+
+        // Function to save all codes back to localStorage
+        function saveAllCodes(codesObject) {
+             try {
+                localStorage.setItem(localStorageKey, JSON.stringify(codesObject));
+             } catch (e) {
+                 console.error('Error saving all codes to localStorage:', e);
+                 showStatus('Error saving codes.', 5000);
+             }
+        }
+
+
+        // Function to save the current code with a given name
+        function saveCode() {
+            const code = codeEditor.value;
+            const name = codeNameInput.value.trim();
+
+            if (!name) {
+                showStatus('Please enter a name for your code.', 3000);
+                return;
+            }
+
+            const allCodes = getAllSavedCodes(); // Get existing codes
+            allCodes[name] = code; // Add or update the code under this name
+
+            saveAllCodes(allCodes); // Save the updated collection
+            showStatus(`Code "${name}" saved successfully!`);
+            displaySavedCodesList(); // Refresh the list of saved codes
+        }
+
+        // Function to load code into the editor by name
+        function loadCodeByName(name) {
+            const allCodes = getAllSavedCodes();
+            if (allCodes.hasOwnProperty(name)) {
+                codeEditor.value = allCodes[name];
+                codeNameInput.value = name; // Set the name in the input field
+                showStatus(`Code "${name}" loaded.`);
+                 // Optional: Automatically run code after loading
+                 // runCode();
+            } else {
+                showStatus(`Code "${name}" not found.`);
+            }
+        }
+
+         // Function to delete code by name
+        function deleteCodeByName(name) {
+            if (confirm(`Are you sure you want to delete "${name}"?`)) {
+                const allCodes = getAllSavedCodes();
+                if (allCodes.hasOwnProperty(name)) {
+                    delete allCodes[name]; // Remove the entry
+                    saveAllCodes(allCodes); // Save the updated collection
+                    showStatus(`Code "${name}" deleted.`);
+                    displaySavedCodesList(); // Refresh the list
+
+                    // If the deleted code was currently in the editor, clear the editor
+                    if (codeNameInput.value === name) {
+                        codeEditor.value = '';
+                        codeNameInput.value = '';
+                         // Also clear the output if the code in the editor was deleted
+                        clearOutput();
+                    }
+
+                } else {
+                    showStatus(`Code "${name}" not found.`);
+                }
+            }
+        }
+
+
+        // Function to display the list of saved codes
+        function displaySavedCodesList() {
+            const allCodes = getAllSavedCodes();
+            savedCodesList.innerHTML = ''; // Clear the current list
+
+            const codeNames = Object.keys(allCodes); // Get an array of all the saved code names
+
+            if (codeNames.length === 0) {
+                savedCodesList.innerHTML = '<li>No saved codes yet.</li>';
+                return;
+            }
+
+            // Sort names alphabetically
+            codeNames.sort();
+
+            codeNames.forEach(name => {
+                const listItem = document.createElement('li');
+
+                // Create a span for the code name (clickable to load)
+                const nameSpan = document.createElement('span');
+                nameSpan.classList.add('code-name');
+                nameSpan.textContent = name;
+                nameSpan.title = `Click to load "${name}"`; // Tooltip
+                nameSpan.addEventListener('click', () => loadCodeByName(name)); // Add click listener
+
+                // Create a button to delete the code
+                const deleteButton = document.createElement('button');
+                deleteButton.classList.add('delete-btn');
+                deleteButton.textContent = 'Delete';
+                deleteButton.title = `Delete "${name}"`; // Tooltip
+                deleteButton.addEventListener('click', (event) => {
+                    event.stopPropagation(); // Prevent the list item's click from firing
+                    deleteCodeByName(name);
+                });
+
+                listItem.appendChild(nameSpan);
+                listItem.appendChild(deleteButton);
+
+                savedCodesList.appendChild(listItem);
+            });
+        }
+
+        // Function to clear the editor textarea only
+        function clearEditor() {
+             if (confirm('Are you sure you want to clear the current code in the editor?')) {
+                codeEditor.value = '';
+                codeNameInput.value = ''; // Also clear the name input
+                showStatus('Editor cleared.');
+                clearOutput(); // Also clear the output when editor is cleared
+             }
+        }
+
+        // Function to run the code in the editor
+        function runCode() {
+            const code = codeEditor.value;
+            // Clear previous content in the iframe
+            outputFrame.contentDocument.open();
+            outputFrame.contentDocument.write('');
+            outputFrame.contentDocument.close();
+
+            try {
+                // Write the code into the iframe's document
+                // This executes the HTML, CSS, and JavaScript within the iframe
+                outputFrame.contentDocument.open();
+                outputFrame.contentDocument.write(code);
+                outputFrame.contentDocument.close();
+                showStatus('Code executed.');
+            } catch (e) {
+                // Catch potential errors during execution (though iframe handles many)
+                showStatus('Error executing code. Check console for details.', 5000);
+                console.error('Error writing code to iframe:', e);
+                 // Display error in the iframe itself if possible
+                 if (outputFrame.contentDocument) {
+                     const errorDiv = outputFrame.contentDocument.createElement('div');
+                     errorDiv.style.color = 'red';
+                     errorDiv.textContent = 'Execution Error: ' + e.message;
+                     outputFrame.contentDocument.body.appendChild(errorDiv);
+                 }
+            }
+        }
+
+        // Function to clear the output iframe
+        function clearOutput() {
+             outputFrame.contentDocument.open();
+             outputFrame.contentDocument.write('');
+             outputFrame.contentDocument.close();
+        }
+
+        // --- Service Worker Registration (for PWA features) ---
+        // This script attempts to register a service worker if the browser supports it.
+        // You would need a 'service-worker.js' file in the same directory for this to fully work.
+        // A simple service-worker.js could just cache the HTML, CSS, and JS files.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+
+        // --- Event Listeners ---
+
+        saveButton.addEventListener('click', saveCode);
+        clearEditorButton.addEventListener('click', clearEditor);
+        runButton.addEventListener('click', runCode); // Add listener for the Run button
+
+        // --- Initialization ---
+
+        // Display the list of saved codes when the page loads
+        window.addEventListener('load', displaySavedCodesList);
+
+    </script>
+
+</body>
+</html>
